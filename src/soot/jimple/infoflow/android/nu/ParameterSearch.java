@@ -60,6 +60,7 @@ public class ParameterSearch {
 	final String FIND_VIEW_BY_ID = "findViewById";
 	final String GET_IDENTIFIER_SIGNATURE = 
 			"<android.content.res.Resources: int getIdentifier(java.lang.String,java.lang.String,java.lang.String)>";
+	final int MAX_RECURSION_COUNT = 10000;
 	ValueResourceParser valResParser = null;
 	CallGraph cg = null;
 	List<ARSCFileParser.ResPackage> resourcePackages;
@@ -229,10 +230,19 @@ public class ParameterSearch {
 	}
 	
 	private Integer findLastResIDAssignment(Stmt stmt, Value target, BiDiInterproceduralCFG<Unit, SootMethod> cfg) {
+		return findLastResIDAssignmentLimit(stmt, target, cfg, MAX_RECURSION_COUNT);
+	}
+		
+		
+	private Integer findLastResIDAssignmentLimit(Stmt stmt, Value target, BiDiInterproceduralCFG<Unit, SootMethod> cfg, int cnt) {
 		// 01/26/17 James:
-		// TODO: This thing sometimes goes under StackOverFlowException...
-		// Will debug soon.
+		// TODO: Added a temporary hack to prevent infinite recursion.. Need to debug why this is happening.
 		// 
+		
+		if (cnt == 0) {
+			System.err.println("Error: findLastResIDAssignment seach depth exceeeded.");
+			return null;
+		}
 		
 //		if (!doneSet.add(stmt))
 //			return null;
@@ -383,7 +393,7 @@ public class ParameterSearch {
 								return ((IntConstant) arg).value;
 							else{
 								System.out.println("Still not integer");
-								Integer lastAssignment = findLastResIDAssignment((Stmt) caller, arg, cfg);
+								Integer lastAssignment = findLastResIDAssignmentLimit((Stmt) caller, arg, cfg, cnt-1);
 								if (lastAssignment != null)
 									return lastAssignment;
 							}
@@ -397,7 +407,7 @@ public class ParameterSearch {
 		for (Unit pred : cfg.getPredsOf(stmt)) {
 			if (!(pred instanceof Stmt))
 				continue;
-			Integer lastAssignment = findLastResIDAssignment((Stmt) pred, target, cfg);
+			Integer lastAssignment = findLastResIDAssignmentLimit((Stmt) pred, target, cfg, cnt-1);
 			if (lastAssignment != null)
 				return lastAssignment;
 		}
