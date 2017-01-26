@@ -1125,6 +1125,8 @@ public class SetupApplication {
 		ParameterSearch ps = new ParameterSearch(valResMgr, this.resourcePackages,this.appPackageName, info.getICFG());
 		Set<Stmt> rs = ps.findViewByIdParamSearch();
 		ps.setContentViewSearch();
+		ps.findPreferenceSetMethods();
+		ps.setSharedPreferencesSearch();
 		//GraphTool.displayAllMethodGraph();
 		soot.G.reset();
 		return rs;
