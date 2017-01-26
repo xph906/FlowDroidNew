@@ -541,7 +541,7 @@ public class Test {
 					//analyze resource file to extract view info
 					ValueResourceParser valResParser = new ValueResourceParser(fullFilePath, apktoolpath, tmpDirPath);
 					valResParser.displayDecompiledValueIDPairs();
-					runAnalysisForConstantPropogation(fullFilePath, args[1], null, valResParser,true);
+					runAnalysisForConstantPropogation(fullFilePath, args[1], null, valResParser,false);
 					
 					//Analysis
 					//runNUDataFlowAnalysis(fullFilePath, args[1]);					
@@ -1355,6 +1355,9 @@ public class Test {
 			//this.appPackageName = processMan.getPackageName();
 			ParameterSearch ps = new ParameterSearch(valResMgr,  resParser.getPackages(),  processMan.getPackageName(),null);
 			ps.searchMethodCall("findViewById", null);
+			ps.findPreferenceSetMethods();			
+			ps.findPreferenceGetMethods();
+
 			
 			return res;
 		} catch (IOException ex) {

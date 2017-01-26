@@ -161,8 +161,36 @@ public class ParameterSearch {
 		}
 	}
 	
-	public void findPreferenceSetMethods(){
+	public Set<SootMethod> findPreferenceGetMethods() {
+		//first search all findViewById statement
+		HashSet<SootMethod> getMethods = new HashSet<SootMethod>();
+		for (QueueReader<MethodOrMethodContext> rdr =
+				Scene.v().getReachableMethods().listener(); rdr.hasNext(); ) {
+			SootMethod m = rdr.next().method();
+			if(!m.hasActiveBody()) continue;
+			
+			UnitGraph g = new ExceptionalUnitGraph(m.getActiveBody());
+		    Orderer<Unit> orderer = new PseudoTopologicalOrderer<Unit>();
+		    for (Unit u : orderer.newList(g, false)) {
+		    	Stmt s = (Stmt)u;
+		    	if(!s.containsInvokeExpr()) continue;
+		    	
+		    	InvokeExpr ie = s.getInvokeExpr();
+		    	SootMethod method = ie.getMethod();
+		    	if(method.getSignature().contains("android.content.SharedPreferences$Editor") &&
+		    			method.getName().contains("get")){
+		    		System.out.println("PreferenceGetMethod:" + ie);
+		    		getMethods.add(method);
+		    	}
+		    }
+		}
+		return getMethods;
+	}
+	
+	public Set<SootMethod> findPreferenceSetMethods(){
 		//first search all findViewById statements
+		HashSet<SootMethod> setMethods = new HashSet<SootMethod>();
+
 		for (QueueReader<MethodOrMethodContext> rdr =
 				Scene.v().getReachableMethods().listener(); rdr.hasNext(); ) {
 			SootMethod m = rdr.next().method();
@@ -179,9 +207,11 @@ public class ParameterSearch {
 		    	if(method.getSignature().contains("android.content.SharedPreferences$Editor") &&
 		    			method.getName().contains("put")){
 		    		System.out.println("PreferenceSetMethod:" + ie);
+		    		setMethods.add(method);
 		    	}
 		    }
 		}
+		return setMethods;
 	}
 	
 	private UnitGraph findMethodGraph(SootMethod method){
@@ -199,6 +229,11 @@ public class ParameterSearch {
 	}
 	
 	private Integer findLastResIDAssignment(Stmt stmt, Value target, BiDiInterproceduralCFG<Unit, SootMethod> cfg) {
+		// 01/26/17 James:
+		// TODO: This thing sometimes goes under StackOverFlowException...
+		// Will debug soon.
+		// 
+		
 //		if (!doneSet.add(stmt))
 //			return null;
 		
