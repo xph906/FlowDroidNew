@@ -162,11 +162,15 @@ public class ParameterSearch {
 		    		Value v = ie.getArg(0);
 		    		if(v instanceof Constant){
 		    			//TODO: add constant to map
+		    			System.out.println("Constant SharedPreference in Method: " + v);
+		    			GlobalData global = GlobalData.getInstance();
+		    			global.addPreferenceKey(v.toString());
+		    			solvedCnt++;
 		    			continue;
 		    		}
 		    		
 		    		s.addTag(new StmtPosTag(cnt, m));
-		    		System.out.println("NonConstant SharedPreference in Method:"+s);
+		    		System.out.println("NonConstant SharedPreference in Method:" + s);
 		    		System.out.println("  DeclaringCls:"+cfg.getMethodOf(s).getDeclaringClass().getName());
 		    		List<Tag> tt = s.getTags();
 		    		if((tt != null))
@@ -183,14 +187,17 @@ public class ParameterSearch {
 		    			unsolvedCnt++;
 		    		}
 		    		else{
-		    			System.out.println("  Pref Value: "+pref);
+		    			System.out.println("  Pref Key: "+pref);
 		    			solvedCnt++;
 		    			GlobalData global = GlobalData.getInstance();
+		    			global.addPreferenceKey(pref);
 		    			//global.addLayoutID(s, cfg, id);
 		    		}
 		    	}
 		    }
 		}
+		System.out.println("JAMES: SHARED PREFERENCE SOLVED COUNT = " + solvedCnt);
+		System.out.println("JAMES: SHARED PREFERENCE UNSOLVED COUNT = " + unsolvedCnt);
 		return rs;
 	}
 	
@@ -557,9 +564,11 @@ public class ParameterSearch {
 			if (assign.getLeftOp() == target) {
 				System.out.println("Debug: "+assign+" "+assign.getRightOp().getClass());
 				// ok, now find the new value from the right side
-				if (assign.getRightOp() instanceof StringConstant)
+				if (assign.getRightOp() instanceof StringConstant) {
+					System.out.println("Debug: Assign was a constant");
 					return ((StringConstant) assign.getRightOp()).value;
-				else if (assign.getRightOp() instanceof FieldRef) {
+				} else if (assign.getRightOp() instanceof FieldRef) {
+					System.out.println("Debug: Assign was field ref");
 					SootField field = ((FieldRef) assign.getRightOp()).getField();
 					for (Tag tag : field.getTags()){
 						if (tag instanceof StringConstantValueTag){
@@ -582,9 +591,11 @@ public class ParameterSearch {
 					}
 				} 
 				else if(assign.getRightOp() instanceof Local){
+					System.out.println("Debug: Assign was local");
 					target = assign.getRightOp();
 				}
 				else if (assign.getRightOp() instanceof InvokeExpr) {
+					System.out.println("Debug: Assign was invoke");
 					InvokeExpr inv = (InvokeExpr) assign.getRightOp();
 				}
 			}
